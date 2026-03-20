@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const typeParam = searchParams.get('type');
+  const categoryParam = searchParams.get('category');
   const { pc, mobile } = getImages();
 
   let list;
@@ -18,7 +19,16 @@ export async function GET(request) {
     list = isMobileDevice ? mobile : pc;
   }
 
+  // 根据分类过滤
+  if (categoryParam) {
+    list = list.filter(img => img.category === categoryParam);
+  }
+
   if (list.length === 0) {
+    // 如果指定了分类但没找到，直接返回 404，而不是 fallback 到其他设备类型
+    if (categoryParam) {
+      return new Response(`No images found in category: ${categoryParam}`, { status: 404 });
+    }
     list = list === pc ? mobile : pc;
   }
 

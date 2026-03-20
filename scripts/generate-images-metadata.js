@@ -35,6 +35,8 @@ async function generateMetadata() {
           const buffer = fs.readFileSync(filePath);
           const dimensions = imageSize(buffer);
           const relativePath = path.relative(rootDir, filePath).replace(/\\/g, '/');
+          const pathSegments = relativePath.split('/');
+          const category = pathSegments.length > 1 ? pathSegments[0] : 'default';
           const size = (stat.size / 1024).toFixed(2) + ' KB';
 
           // 生成缩略图文件名
@@ -55,6 +57,7 @@ async function generateMetadata() {
 
           const imgData = {
             src: relativePath,
+            category: category,
             thumb: hasThumb ? `.thumbnails/${thumbFileName}` : null,
             width: dimensions.width,
             height: dimensions.height,

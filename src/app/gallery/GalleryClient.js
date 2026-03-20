@@ -11,10 +11,17 @@ export default function GalleryClient({ initialImages }) {
   const [allImages, setAllImages] = useState(initialImages || []);
   const [selectedImage, setSelectedImage] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const containerRef = useRef(null);
   const gridRef = useRef(null);
   const lightboxRef = useRef(null);
   const cardRef = useRef(null);
+
+  const categories = ['all', ...Array.from(new Set(initialImages.map(img => img.category))).filter(c => c && c !== 'default')];
+
+  const filteredImages = selectedCategory === 'all' 
+    ? allImages 
+    : allImages.filter(img => img.category === selectedCategory);
 
   useEffect(() => {
     // 进入图库页面启用滚动
@@ -52,7 +59,7 @@ export default function GalleryClient({ initialImages }) {
         gsap.set(Array.from(gridRef.current.children).slice(24), { opacity: 1 });
       }
     }
-  }, { scope: containerRef, dependencies: [allImages] });
+  }, { scope: containerRef, dependencies: [filteredImages] });
 
   useGSAP(() => {
     if (selectedImage && lightboxRef.current && cardRef.current) {
@@ -129,20 +136,40 @@ export default function GalleryClient({ initialImages }) {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[#fafafa] dark:bg-black text-neutral-900 dark:text-white selection:bg-neutral-200 dark:selection:bg-white/10 relative transition-colors duration-500">
-      <header className="fixed top-0 left-0 right-0 z-[60] flex justify-between items-center px-8 py-6 pointer-events-none">
-        <Link href="/" className="text-sm tracking-[0.4em] uppercase font-light hover:opacity-50 transition-opacity pointer-events-auto">
-          Gallery
-        </Link>
-        <div className="flex items-center gap-6 pointer-events-auto">
-          <div className="text-[10px] tracking-[0.3em] uppercase opacity-40 font-medium hidden md:block">
-            全部图片 · {allImages.length}
+      <header className="fixed top-0 left-0 right-0 z-[60] flex flex-col pointer-events-none">
+        <div className="flex justify-between items-center px-8 py-6">
+          <Link href="/" className="text-sm tracking-[0.4em] uppercase font-light hover:opacity-50 transition-opacity pointer-events-auto">
+            Gallery
+          </Link>
+          <div className="flex items-center gap-6 pointer-events-auto">
+            <div className="text-[10px] tracking-[0.3em] uppercase opacity-40 font-medium hidden md:block">
+              {filteredImages.length} 张图片
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
+        
+        {categories.length > 1 && (
+          <div className="px-8 pb-4 flex gap-4 overflow-x-auto no-scrollbar pointer-events-auto">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`text-[10px] tracking-widest uppercase px-3 py-1 rounded-full border transition-all ${
+                  selectedCategory === cat 
+                    ? 'bg-neutral-900 dark:bg-white text-white dark:text-black border-transparent' 
+                    : 'border-neutral-200 dark:border-white/10 opacity-40 hover:opacity-100 hover:border-neutral-400'
+                }`}
+              >
+                {cat === 'all' ? '全部' : cat}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      <main ref={gridRef} className="pt-24 p-2 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] auto-rows-[120px] md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:auto-rows-[160px] grid-flow-dense gap-2 pb-20 max-w-[2000px] mx-auto">
-        {allImages.map((img, idx) => (
+      <main ref={gridRef} className="pt-32 p-2 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] auto-rows-[120px] md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:auto-rows-[160px] grid-flow-dense gap-2 pb-20 max-w-[2000px] mx-auto">
+        {filteredImages.map((img, idx) => (
           <GalleryItem 
             key={idx} 
             img={img} 
@@ -225,10 +252,18 @@ export default function GalleryClient({ initialImages }) {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] opacity-40 uppercase tracking-widest font-bold">类型</label>
-                <div className="bg-neutral-100 dark:bg-white/5 p-3 rounded-lg font-mono text-xs opacity-90">
-                  {selectedImage.type === 'PC' ? '横屏 (Landscape)' : '竖屏 (Portrait)'}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] opacity-40 uppercase tracking-widest font-bold">分类</label>
+                  <div className="bg-neutral-100 dark:bg-white/5 p-3 rounded-lg font-mono text-xs opacity-90 uppercase">
+                    {selectedImage.category === 'default' ? '默认' : selectedImage.category}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] opacity-40 uppercase tracking-widest font-bold">终端</label>
+                  <div className="bg-neutral-100 dark:bg-white/5 p-3 rounded-lg font-mono text-xs opacity-90">
+                    {selectedImage.type === 'PC' ? '横屏 (PC)' : '竖屏 (手机)'}
+                  </div>
                 </div>
               </div>
 
